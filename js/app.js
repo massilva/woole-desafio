@@ -10,20 +10,12 @@
                 }
             );
         tileLayer.addTo(map);
-        var style = {color:'blue', opacity: 1.0, fillOpacity: 1.0, weight: 2, clickable: false};
-        $.get("data/pontos.kml",function(data){
-            var loader = new FileLoader(map, {
-                fitBounds: true, 
-                addToMap: true,
-                layerOptions: {
-                    style: style
-                }
-            });
-            var layer = loader._convertToGeoJSON(data,"kml");
-            window.setTimeout(function () {
-                map.fitBounds(layer.getBounds());
-            }, 500);
-            console.log(layer);
+
+        var kmlLayer = new L.KML("data/pontos.kml", {async: true});
+        kmlLayer.on("loaded", function(e) {
+          map.fitBounds(e.target.getBounds());
         });
+        map.addLayer(kmlLayer);
+
     });
 }());
