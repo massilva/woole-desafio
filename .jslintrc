@@ -19,11 +19,9 @@
     "passfail": false,
     "plusplus": false,
     "predef": [
-        "$",
-        "console",
-        "require",
         "L",
         "$",
+        "require",
         "console",
         "FileLoader",
         "document"

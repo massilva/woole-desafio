@@ -10,8 +10,8 @@
 
         //carrega o layout do mapa
         tileLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> Contributors',
-                maxZoom: 18
+            attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> Contributors',
+            maxZoom: 18
         });
         tileLayer.addTo(map);
 
