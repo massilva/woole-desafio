@@ -4,7 +4,8 @@
         var map,
             tileLayer,
             kmlLayer,
-            search;
+            search,
+            ;
 
         //inicializa o mapa com a visão de salvador e no zoom max
         map = L.map('mapa').setView([-13.0015785, -38.507568], 18);
@@ -27,7 +28,7 @@
             layer: new L.layerGroup().addTo(map),
             control: {},
             limites: [],
-            qtdBuscas: 0,
+            count: 0,
             placeholders: ['Partida...', 'Chegada...']
         };
 
@@ -45,16 +46,16 @@
                 minLength: 2
             })
             .on("search_locationfound", function (response) {
-                var posicao = search.qtdBuscas % 2; //0 partida, 1 chegada
-                if (!posicao) {
+                var pos = search.count % 2; //0 partida, 1 chegada
+                if (!pos) {
                     search.layer.eachLayer(function (layer) {
                         search.layer.removeLayer(layer);
                     });
                 }
-                search.limites[posicao] = response.latlng;
+                search.limites[pos] = response.latlng;
                 search.layer.addLayer(L.marker(response.latlng));
-                search.qtdBuscas++;
-                $("#searchtext10").attr('placeholder', search.placeholders[posicao ? 0 : 1]);
+                search.count++;
+                $("#searchtext10").attr('placeholder', search.placeholders[pos ? 0 : 1]);
             });
         map.addControl(search.control);
         $("#searchtext10").attr('placeholder', search.placeholders[0]);
