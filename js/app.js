@@ -52,16 +52,22 @@
                 minLength: 2
             })
             .on("search_locationfound", function (response) {
-                var marcador = L.marker(response.latlng),
+                var id,
+                    marcador = L.marker(response.latlng),
                     pos= search.count % 2; //0 partida, 1 chegada
 
                 if (!pos) {
                     search.layer.eachLayer(function (layer) {
+                        for  (id in adjacencyMatrix[layer._leaflet_id]) {
+                            delete adjacencyMatrix[layer._leaflet_id][id];
+                        }
+                        delete adjacencyMatrix[layer._leaflet_id];
                         search.layer.removeLayer(layer);
                     });
                 }
 
                 search.count++;
+                search.layer.addLayer(marcador);
                 search.limites[pos] = response.latlng;
                 $("#searchtext10").attr('placeholder', search.placeholders[pos ? 0 : 1]);
 
