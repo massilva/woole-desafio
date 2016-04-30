@@ -27,13 +27,13 @@
             layers.eachLayer(function (source) {
                 updateDistanceMatrix(source);
                 source.on("click", function () {
+                    console.log(this._leaflet_id);
                     this.closePopup();
                 });
             });
 
             // Atualiza a lista de menor distancia
             layers.eachLayer(function (source) {
-                leastDistanceList[source._leaflet_id] = source._leaflet_id;
                 updateLeastDistanceList(source);
             });
 
@@ -72,6 +72,7 @@
                             delete distanceMatrix[layer._leaflet_id][id];
                         }
                         delete distanceMatrix[layer._leaflet_id];
+                        delete leastDistanceList[layer._leaflet_id];
                         search.layer.removeLayer(layer);
                     });
                 }
@@ -83,6 +84,7 @@
 
                 layers.addLayer(marcador);
                 updateDistanceMatrix(marcador);
+                updateLeastDistanceList(marcador);
 
             });
 
@@ -100,6 +102,7 @@
         }
 
         function updateLeastDistanceList (source) {
+            leastDistanceList[source._leaflet_id] = source._leaflet_id;
             layers.eachLayer(function (target) {
                 if (source !== target) {
                     if(distanceMatrix[source._leaflet_id][leastDistanceList[source._leaflet_id]] > distanceMatrix[source._leaflet_id][target._leaflet_id]) {
