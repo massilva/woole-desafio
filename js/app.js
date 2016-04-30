@@ -34,13 +34,7 @@
             // Atualiza a lista de menor distancia
             layers.eachLayer(function (source) {
                 leastDistanceList[source._leaflet_id] = source._leaflet_id;
-                layers.eachLayer(function (target) {
-                    if (source !== target) {
-                        if(distanceMatrix[source._leaflet_id][leastDistanceList[source._leaflet_id]] > distanceMatrix[source._leaflet_id][target._leaflet_id]) {
-                            leastDistanceList[source._leaflet_id] = target._leaflet_id;
-                        }
-                    }
-                });
+                updateLeastDistanceList(source);
             });
 
         });
@@ -105,5 +99,14 @@
             }
         }
 
+        function updateLeastDistanceList (source) {
+            layers.eachLayer(function (target) {
+                if (source !== target) {
+                    if(distanceMatrix[source._leaflet_id][leastDistanceList[source._leaflet_id]] > distanceMatrix[source._leaflet_id][target._leaflet_id]) {
+                        leastDistanceList[source._leaflet_id] = target._leaflet_id;
+                    }
+                }
+            });
+        }
     });
 }());
