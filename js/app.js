@@ -5,7 +5,7 @@
             tileLayer,
             kmlLayer,
             search,
-            ;
+            adjacencyMatrix = {};
 
         //inicializa o mapa com a visão de salvador e no zoom max
         map = L.map('mapa').setView([-13.0015785, -38.507568], 18);
@@ -21,6 +21,12 @@
         kmlLayer = new L.KML("data/pontos.kml", {async: true});
         kmlLayer.on("loaded", function (e) {
             map.fitBounds(e.target.getBounds());
+            kmlLayer.eachLayer(function (source) {
+                adjacencyMatrix[source._leaflet_id] = {};
+                kmlLayer.eachLayer(function (target) {
+                    adjacencyMatrix[source._leaflet_id][target._leaflet_id] = source === target ? Infinity : source.getLatLng().distanceTo(target.getLatLng());
+                });
+            });
         });
         map.addLayer(kmlLayer);
 
