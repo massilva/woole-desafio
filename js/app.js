@@ -3,7 +3,7 @@
     $(document).ready(function () {
         var map,
             tileLayer,
-            kmlLayer,
+            layers,
             search,
             adjacencyMatrix = {};
 
@@ -18,17 +18,17 @@
         tileLayer.addTo(map);
 
         //carrega os dados do kml
-        kmlLayer = new L.KML("data/pontos.kml", {async: true});
-        kmlLayer.on("loaded", function (e) {
+        layers = new L.KML("data/pontos.kml", {async: true});
+        layers.on("loaded", function (e) {
             map.fitBounds(e.target.getBounds());
-            kmlLayer.eachLayer(function (source) {
-                adjacencyMatrix[source._leaflet_id] = {};
-                kmlLayer.eachLayer(function (target) {
-                    adjacencyMatrix[source._leaflet_id][target._leaflet_id] = source === target ? Infinity : source.getLatLng().distanceTo(target.getLatLng());
+            layers.eachLayer(function (source) {
+                updateAdjancyMatrix(source);
+                source.on("click", function () {
+                    this.closePopup();
                 });
             });
         });
-        map.addLayer(kmlLayer);
+        map.addLayer(layers);
 
         search = {
             layer: new L.layerGroup().addTo(map),
@@ -52,19 +52,37 @@
                 minLength: 2
             })
             .on("search_locationfound", function (response) {
-                var pos = search.count % 2; //0 partida, 1 chegada
+                var marcador = L.marker(response.latlng),
+                    pos= search.count % 2; //0 partida, 1 chegada
+
                 if (!pos) {
                     search.layer.eachLayer(function (layer) {
                         search.layer.removeLayer(layer);
                     });
                 }
-                search.limites[pos] = response.latlng;
-                search.layer.addLayer(L.marker(response.latlng));
+
                 search.count++;
+                search.limites[pos] = response.latlng;
                 $("#searchtext10").attr('placeholder', search.placeholders[pos ? 0 : 1]);
+
+                layers.addLayer(marcador);
+                updateAdjancyMatrix(marcador);
+
             });
+
         map.addControl(search.control);
         $("#searchtext10").attr('placeholder', search.placeholders[0]);
+
+        //Atualiza matrix de adjacencia
+        function updateAdjancyMatrix(marcador) {
+            var id, layer;
+            adjacencyMatrix[marcador._leaflet_id] = {};
+            for (id in adjacencyMatrix) {
+                layer = layers.getLayer(id);
+                adjacencyMatrix[id][marcador._leaflet_id] = layer === marcador ? Infinity : layer.getLatLng().distanceTo(marcador.getLatLng());
+                adjacencyMatrix[marcador._leaflet_id][id] = adjacencyMatrix[id][marcador._leaflet_id];
+            }
+        }
 
     });
 }());
