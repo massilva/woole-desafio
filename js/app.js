@@ -3,7 +3,8 @@
     $(document).ready(function () {
         var map,
             tileLayer,
-            kmlLayer;
+            kmlLayer,
+            search;
 
         //inicializa o mapa com a visão de salvador e no zoom max
         map = L.map('mapa').setView([-13.0015785, -38.507568], 18);
@@ -21,6 +22,42 @@
             map.fitBounds(e.target.getBounds());
         });
         map.addLayer(kmlLayer);
+
+        search = {
+            layer: new L.layerGroup().addTo(map),
+            control: {},
+            limites: [],
+            qtdBuscas: 0,
+            placeholders: ['Partida...', 'Chegada...']
+        };
+
+        search.control =
+            new L.Control.Search({
+                url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
+                jsonpParam: 'json_callback',
+                propertyName: 'display_name',
+                propertyLoc: ['lat', 'lon'],
+                circleLocation: true,
+                markerLocation: false,
+                autoType: false,
+                autoCollapse: true,
+                textPlaceholder: '',
+                minLength: 2
+            })
+            .on("search_locationfound", function (response) {
+                var posicao = search.qtdBuscas % 2; //0 partida, 1 chegada
+                if (!posicao) {
+                    search.layer.eachLayer(function (layer) {
+                        search.layer.removeLayer(layer);
+                    });
+                }
+                search.limites[posicao] = response.latlng;
+                search.layer.addLayer(L.marker(response.latlng));
+                search.qtdBuscas++;
+                $("#searchtext10").attr('placeholder', search.placeholders[posicao ? 0 : 1]);
+            });
+        map.addControl(search.control);
+        $("#searchtext10").attr('placeholder', search.placeholders[0]);
 
     });
 }());
