@@ -2,11 +2,9 @@
     'use strict';
     $(document).ready(function () {
         var map,
-            tileLayer,
-            layers,
-            search,
+            tileLayer, layers, search, path,
             distanceMatrix = {},
-            leastDistanceList = {};
+            selected, countSelected = 0;
 
         //inicializa o mapa com a visão de salvador e no zoom max
         map = L.map('mapa').setView([-13.0015785, -38.507568], 18);
@@ -18,17 +16,41 @@
         });
         tileLayer.addTo(map);
 
+        path = new L.layerGroup();
+        map.addLayer(path);
+
         //carrega os dados do kml
         layers = new L.KML("data/pontos.kml", {async: true});
         layers.on("loaded", function (e) {
             map.fitBounds(e.target.getBounds());
+            search.limites[0] = layers.getLayers()[0];
 
             // Atualiza a matrix de distancia
             layers.eachLayer(function (source) {
                 updateDistanceMatrix(source);
                 source.on("click", function () {
-                    console.log(this._leaflet_id);
                     this.closePopup();
+
+                    if (search.limites.length == 2) {
+                        var pos = countSelected % 2, initial;
+
+                        if (!pos) {
+                            path.eachLayer(function (layer) {
+                                map.removeLayer(layer);
+                            });
+                        }
+
+                        initial = pos === 0 ? search.limites[0] : selected;
+                        dijktra(initial, this);
+
+                        selected = this;
+                        countSelected++;
+
+                        if (countSelected % 2 === 0) {
+                            dijktra(selected, search.limites[1]);
+                        }
+                    }
+
                 });
             });
 
@@ -59,7 +81,7 @@
             .on("search_locationfound", function (response) {
                 var id,
                     marcador = L.marker(response.latlng),
-                    pos= search.count % 2; //0 partida, 1 chegada
+                    pos = search.count % 2; //0 partida, 1 chegada
 
                 if (!pos) {
                     search.layer.eachLayer(function (layer) {
@@ -67,14 +89,13 @@
                             delete distanceMatrix[layer._leaflet_id][id];
                         }
                         delete distanceMatrix[layer._leaflet_id];
-                        delete leastDistanceList[layer._leaflet_id];
                         search.layer.removeLayer(layer);
                     });
                 }
 
                 search.count++;
                 search.layer.addLayer(marcador);
-                search.limites[pos] = response.latlng;
+                search.limites[pos] = marcador;
                 $("#searchtext10").attr('placeholder', search.placeholders[pos ? 0 : 1]);
 
                 layers.addLayer(marcador);
@@ -95,15 +116,57 @@
             }
         }
 
-        function updateLeastDistanceList (source) {
-            leastDistanceList[source._leaflet_id] = source._leaflet_id;
-            layers.eachLayer(function (target) {
-                if (source !== target) {
-                    if ((distanceMatrix[source._leaflet_id][leastDistanceList[source._leaflet_id]] > distanceMatrix[source._leaflet_id][target._leaflet_id]) && (leastDistanceList[target._leaflet_id] !== source._leaflet_id)) {
-                        leastDistanceList[source._leaflet_id] = target._leaflet_id;
+        function dijktra(initial, selected) {
+
+            var queue = [], path_distance = [],
+                arr = Object.keys(distanceMatrix),
+                predecessorOf = [],
+                current, backTo, backMarker,
+                top, v_source, adjacent, cost,
+                i, idx;
+
+            for(i = arr.length - 1; i >= 0; --i){
+                path_distance[i] = Infinity;
+                predecessorOf[i] = undefined;
+            }
+            path_distance[arr.indexOf("" + initial._leaflet_id)] = 0;
+
+            //Algoritmo de dijktra
+            queue.push(initial);
+            while (queue.length) {
+                top = queue.shift();
+                v_source = Object.keys(distanceMatrix[top._leaflet_id]);
+                for(i = v_source.length - 1; i >= 0; --i){
+                    adjacent = v_source[i];
+                    cost = distanceMatrix[top._leaflet_id][adjacent];
+                    if(path_distance[arr.indexOf(adjacent)] > path_distance[arr.indexOf("" + top._leaflet_id)] + cost){
+                        if(path_distance[arr.indexOf(adjacent)] != Infinity){
+                            queue.splice(queue.indexOf(adjacent),1);
+                        }
+                        predecessorOf[arr.indexOf(adjacent)] = top._leaflet_id;
+                        path_distance[arr.indexOf(adjacent)] = path_distance[arr.indexOf("" + top._leaflet_id)] + cost;
+                        queue.push(layers.getLayer(adjacent));
                     }
                 }
-            });
+            }
+
+            // Faz backtrack no dijktra desenhando o caminho
+            current = selected;
+            backTo = predecessorOf[arr.indexOf("" + current._leaflet_id)];
+            while (backTo) {
+                backMarker = layers.getLayer(backTo);
+                path.addLayer(
+                    new L.Polyline([current.getLatLng(), backMarker.getLatLng()], {
+                        color: 'red',
+                        weight: 3,
+                        opacity: 0.5,
+                        smoothFactor: 1
+                    })
+                );
+                current = backMarker;
+                backTo = predecessorOf[arr.indexOf(""+current._leaflet_id)];
+            }
         }
+
     });
 }());

@@ -10,7 +10,7 @@
         autoprefixer = require('gulp-autoprefixer');
 
     gulp.task('js', function () {
-        return gulp.src('./js/*.js')
+        return gulp.src(['./js/*.js', '!./js/main.min.js'])
             .pipe(concat({path: "main.js", stat: { mode: '0666' }}))
             .pipe(inject.prepend('(function (window) {\n'))
             .pipe(inject.append('\n})(window);'))
