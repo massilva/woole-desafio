@@ -4,7 +4,19 @@
         var map,
             tileLayer, layers, search, path,
             distanceMatrix = {},
-            selected, countSelected = 0;
+            selected, countSelected = 0,
+            icons = [
+                L.icon({
+                    iconUrl: 'css/images/bike-green.svg',
+                    iconSize: [24, 24]
+                }),
+                L.icon({
+                    iconUrl: 'css/images/race-flag.png',
+                    shadowUrl: 'css/images/race-flag-shadow.png',
+                    iconSize:     [32, 32],
+                    shadowSize:   [32, 32]
+                })
+            ];
 
         //inicializa o mapa com a visão de salvador e no zoom max
         map = L.map('mapa').setView([-13.0015785, -38.507568], 18);
@@ -80,8 +92,8 @@
             })
             .on("search_locationfound", function (response) {
                 var id,
-                    marcador = L.marker(response.latlng),
-                    pos = search.count % 2; //0 partida, 1 chegada
+                    pos = search.count % 2, //0 partida, 1 chegada
+                    marcador = L.marker(response.latlng, {icon: icons[pos]});
 
                 if (!pos) {
                     search.layer.eachLayer(function (layer) {
@@ -157,7 +169,7 @@
                 backMarker = layers.getLayer(backTo);
                 path.addLayer(
                     new L.Polyline([current.getLatLng(), backMarker.getLatLng()], {
-                        color: 'red',
+                        color: 'blue',
                         weight: 3,
                         opacity: 0.5,
                         smoothFactor: 1
